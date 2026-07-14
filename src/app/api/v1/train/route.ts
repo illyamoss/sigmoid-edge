@@ -18,38 +18,34 @@ export async function POST(request: Request): Promise<NextResponse> {
     const parsed = ingestionRequestSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.error("Zod Validation Error:", JSON.stringify(parsed.error.format(), null, 2));
       return NextResponse.json(
         {
-          error: "Invalid ingestion payload",
+          error: `Invalid ingestion payload: ${parsed.error.message}`,
           details: parsed.error.flatten(),
         },
         { status: 400 },
       );
     }
 
-    const { workspaceId, stripeSource, noGa4 } = parsed.data;
-
-    let ga4Events: InternalGa4Event[];
-    let stripeCustomers: StripeCustomer[];
-
-    if (stripeSource === "api") {
-      stripeCustomers = await pullStripeCustomers();
-    } else {
-      stripeCustomers = parsed.data.stripe ?? [];
+    const workspaceId = parsed.data.workspaceId;
+    const rawGa4 = parsed.data.ga4;
+    if (!rawGa4 || rawGa4.length === 0) {
+      return NextResponse.json(
+        { error: "GA4 events are strictly required." },
+        { status: 400 },
+      );
     }
-
-    if (noGa4) {
-      ga4Events = [];
-    } else {
-      const rawGa4 = parsed.data.ga4;
-      if (!rawGa4 || rawGa4.length === 0) {
-        return NextResponse.json(
-          { error: "GA4 events are required when noGa4 is not set" },
-          { status: 400 },
-        );
-      }
-      ga4Events = transformBigQueryEvents(rawGa4);
+    
+    const stripeCustomers = parsed.data.stripe;
+    if (!stripeCustomers || stripeCustomers.length === 0) {
+      return NextResponse.json(
+        { error: "Stripe customers are strictly required." },
+        { status: 400 },
+      );
     }
+    
+    const ga4Events = transformBigQueryEvents(rawGa4);
 
     const repos = createRepositories();
     const classifier = new EdgeClassifierService();

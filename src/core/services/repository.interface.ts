@@ -45,6 +45,11 @@ export interface ReaderFeaturesRepositoryPort {
     workspaceId: string,
     readerToken: string,
   ): Promise<ReaderFeaturesRecord | null>;
+  logPageView(
+    workspaceId: string,
+    readerToken: string,
+    engagementTimeMsec: number,
+  ): Promise<ReaderFeaturesRecord>;
   setSubscriptionState(
     workspaceId: string,
     readerToken: string,

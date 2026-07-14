@@ -24,7 +24,11 @@ async function fetchEdgeScore(origin, workspaceSlug, readerToken) {
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ workspaceSlug, readerToken }),
+    body: JSON.stringify({
+      workspaceSlug,
+      readerToken,
+      logPageView: { engagementTimeMsec: 3000 },
+    }),
   });
 
   if (!response.ok) {

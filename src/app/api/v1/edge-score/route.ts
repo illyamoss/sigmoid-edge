@@ -12,6 +12,9 @@ import { createRepositories } from "@/lib/integration/repository-factory";
 const edgeScoreBodySchema = z.object({
   workspaceSlug: z.string().min(1).max(160),
   readerToken: z.string().min(1).max(128),
+  logPageView: z
+    .object({ engagementTimeMsec: z.number().nonnegative() })
+    .optional(),
 });
 
 const manualScoreBodySchema = z.object({
@@ -36,7 +39,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const { workspaceSlug, readerToken } = parsed.data;
+    const { workspaceSlug, readerToken, logPageView } = parsed.data;
     const repos = createRepositories();
 
     const computeEdgeScore = buildComputeEdgeScore({
@@ -45,7 +48,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       classifier: edgeClassifierService,
     });
 
-    const result = await computeEdgeScore({ workspaceSlug, readerToken });
+    const result = await computeEdgeScore({ workspaceSlug, readerToken, logPageView });
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

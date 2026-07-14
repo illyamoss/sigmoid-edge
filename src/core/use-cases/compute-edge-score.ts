@@ -30,6 +30,7 @@ type ComputeEdgeScoreDeps = {
 type ComputeEdgeScoreParams = {
   workspaceSlug: string;
   readerToken: string;
+  logPageView?: { engagementTimeMsec: number };
 };
 
 type ComputeEdgeScoreResult = {
@@ -115,10 +116,16 @@ export function buildComputeEdgeScore(deps: ComputeEdgeScoreDeps) {
       ? buildClassifierModel(workspace.overrideRules)
       : buildEmptyModel();
 
-    const readerRecord = await deps.readerFeaturesRepository.findByReaderToken(
-      workspace.id,
-      params.readerToken,
-    );
+    const readerRecord = params.logPageView
+      ? await deps.readerFeaturesRepository.logPageView(
+          workspace.id,
+          params.readerToken,
+          params.logPageView.engagementTimeMsec,
+        )
+      : await deps.readerFeaturesRepository.findByReaderToken(
+          workspace.id,
+          params.readerToken,
+        );
 
     if (readerRecord?.hasSubscribed === 1) {
       return {

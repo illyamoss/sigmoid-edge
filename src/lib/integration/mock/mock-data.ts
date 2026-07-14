@@ -81,8 +81,8 @@ function generateMockReaders(): ReaderFeaturesRecord[] {
       recency: randomFloat(0, 5),
       engagement: randomInt(15000, 55000),
       velocity: randomInt(5, 15),
-      hasSubscribed: 0,
-      subscribedAt: null,
+      hasSubscribed: 1,
+      subscribedAt: new Date(Date.now() - randomInt(1, 14) * 24 * 60 * 60 * 1000),
     });
   }
 
@@ -93,7 +93,7 @@ export const mockReaders: ReaderFeaturesRecord[] = generateMockReaders();
 
 export const mockReaderStats: ReaderStatsRecord = {
   totalReaders: TOTAL_READERS,
-  convertedReaders: 0,
+  convertedReaders: CONVERTED_READER_COUNT,
 };
 
 function buildTrainingRows(): TrainingRow[] {

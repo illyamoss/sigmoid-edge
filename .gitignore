@@ -1,5 +1,45 @@
-node_modules
-.next
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
 .env.local
-*.log
+.env.*.local
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cloudflare
+.wrangler/
+.dev.vars
+
+# Drizzle
+drizzle/
+
+# Mock data dumps (regenerate with generate_mocks.cjs)
+mock_ga4_dump.json
+mock_stripe_dump.json
+
+# Misc
+*.pem
+coverage/

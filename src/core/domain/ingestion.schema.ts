@@ -60,11 +60,9 @@ export type StripeCustomer = z.infer<typeof stripeCustomerSchema>;
 export type StripePayload = z.infer<typeof stripePayloadSchema>;
 
 export const ingestionRequestSchema = z.object({
-  workspaceId: z.string().uuid(),
-  ga4: ga4BigQueryPayloadSchema.optional(),
-  stripe: stripePayloadSchema.optional(),
-  stripeSource: z.enum(["api", "upload"]).optional().default("upload"),
-  noGa4: z.boolean().optional().default(false),
+  workspaceId: z.string().min(1),
+  ga4: ga4BigQueryPayloadSchema,
+  stripe: stripePayloadSchema,
 });
 
 export type IngestionRequest = z.infer<typeof ingestionRequestSchema>;

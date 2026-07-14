@@ -90,3 +90,36 @@ The `FileUploaderZone` component already accepts `workspaceId`, `endpoint` (defa
 
 ### No New Files
 This revision modifies the existing dashboard page only. No new feature components are generated. The `FileUploaderZone` component is reused from `02_historical_data_ingestion.md`.
+
+---
+
+## REVISION 3: UI Overhaul, Strict Data Requirements, and Script Exporter Removal
+
+### Rationale
+The dashboard layout and requirements are being updated for a more polished and intuitive publisher experience. The Edge Worker Script export is no longer needed on the dashboard. The data ingestion process strictly requires BOTH GA4 and Stripe data (no partial uploads). The layout is being reordered to prioritize key metrics, and the data ingestion widget is being redesigned to be more compact. The overall dashboard design must be elevated to a premium standard.
+
+### UI / UX Overhaul & Reordering
+1. **Premium Polish**: The dashboard must feature a highly polished, premium aesthetic (e.g., tailored HSL color palettes, modern typography, subtle micro-animations, smooth hover states). It should not look like a basic generic admin panel. It must feel state-of-the-art.
+2. **Unified Metrics & Ingestion Grid**: The data ingestion widget is integrated directly into the `MetricsGridTelemetry` grid as the 6th card ("Model Training"). This balances the dashboard perfectly (a clean 2x3 grid on desktop), eliminating the layout issues of putting a complex form card next to metrics.
+3. **Modal Dialog for Training**: The "Model Training" card displays the model's active status and its last trained timestamp. It includes an interactive "Upload Data" button. Clicking this triggers a gorgeous, custom glassmorphic Modal Dialog (`framer-motion` backed) containing the uploader controls. This hides form complexity inside a clean pop-up, preserving the clean stats dashboard layout.
+4. **Two-Step File Ingestion Widget**: Inside the modal dialog, the uploader renders the two-step raw data ingestion interface:
+   - **GA4 Event Upload Slot**: Accept raw GA4 export arrays (`Ga4BigQueryPayload`).
+   - **Stripe Customers Upload Slot**: Accept raw Stripe customers list (`StripePayload`).
+   - Each slot functions independently, reading files in the browser and displaying a status widget ("Loaded: filename.json (size)" with a reset option) when a valid file is parsed.
+   - A unified **"Train Edge Model"** button resides below the slots. It is only enabled when both files have been successfully validated and loaded into memory.
+   - When clicked, it POSTs the combined payload to `/api/v1/train`.
+5. **Clean Header Navigation**: All navigation buttons ("Dashboard", "Blog") are completely removed from the header to keep the interface simple, dedicated, and elegant.
+
+### Component Removals
+- The `WorkerScriptExporter` component is completely removed from the dashboard and the codebase.
+- The threshold display logic tied to the exporter is removed from the UI.
+- Navigation links are removed from `NavigationBar`.
+
+### Files to Modify (Planned)
+- `src/app/page.tsx` — Reorder components (Metrics at the top, Segments second), remove uploader form code, pass `workspaceId` and `trainedAt` to `MetricsGridTelemetry`.
+- `src/components/features/dashboard/worker-exporter.tsx` — **DELETE** this file.
+- `src/components/shared/navigation-bar.tsx` — Remove navigation link buttons and unused imports.
+- `src/components/features/dashboard/metrics-grid.tsx` — Merge profit and costs into one card, append the interactive "Model Training" card as Card 6, and implement the custom modal upload dialog.
+- `src/components/features/FileUploaderZone.tsx` — Restructure layout to support two independent slots (GA4/Stripe), client-side JSON parsing and schema structure validation, loaded file widgets with reset triggers, and a unified Train button.
+- `src/core/domain/ingestion.schema.ts` — Update `IngestionRequest` to enforce both GA4 and Stripe payloads (remove `.optional()`).
+- `src/app/api/v1/train/route.ts` — Ensure the backend enforces the presence of both datasets.

@@ -85,6 +85,61 @@ export class ReadersFeaturesRepository
     };
   }
 
+  async logPageView(
+    workspaceId: string,
+    readerToken: string,
+    engagementTimeMsec: number,
+  ): Promise<ReaderFeaturesRecord> {
+    const engagementParam = engagementTimeMsec.toString();
+
+    const rows = await db
+      .insert(readersFeatures)
+      .values({
+        workspaceId,
+        readerToken,
+        frequency: "1",
+        recency: "0",
+        engagement: engagementParam,
+        velocity: "1",
+        hasSubscribed: 0,
+      })
+      .onConflictDoUpdate({
+        target: [readersFeatures.workspaceId, readersFeatures.readerToken],
+        set: {
+          frequency: sql`${readersFeatures.frequency} + 1`,
+          recency: sql`0`,
+          engagement: sql`(${readersFeatures.engagement} * ${readersFeatures.frequency} + ${engagementParam}) / (${readersFeatures.frequency} + 1)`,
+          velocity: sql`LEAST(${readersFeatures.velocity} + 1, 50)`,
+          updatedAt: sql`NOW()`,
+        },
+      })
+      .returning({
+        readerToken: readersFeatures.readerToken,
+        frequency: readersFeatures.frequency,
+        recency: readersFeatures.recency,
+        engagement: readersFeatures.engagement,
+        velocity: readersFeatures.velocity,
+        hasSubscribed: readersFeatures.hasSubscribed,
+        subscribedAt: readersFeatures.subscribedAt,
+      });
+
+    const row = rows[0];
+
+    if (!row) {
+      throw new Error(`logPageView: no row returned for readerToken=${readerToken}`);
+    }
+
+    return {
+      readerToken: row.readerToken,
+      frequency: Number(row.frequency),
+      recency: Number(row.recency),
+      engagement: Number(row.engagement),
+      velocity: Number(row.velocity),
+      hasSubscribed: (row.hasSubscribed as 0 | 1) ?? 0,
+      subscribedAt: row.subscribedAt ?? null,
+    };
+  }
+
   async setSubscriptionState(
     workspaceId: string,
     readerToken: string,
@@ -123,3 +178,4 @@ export class ReadersFeaturesRepository
 }
 
 export const readersFeaturesRepository = new ReadersFeaturesRepository();
+
