@@ -12,7 +12,6 @@ export type WorkspaceBillingStatus = (typeof WorkspaceBillingStatus)[keyof typeo
 
 export const PaywallVariant = {
   Open: "open",
-  Newsletter: "newsletter",
   Lock: "lock",
 } as const;
 
@@ -27,6 +26,16 @@ export const ReaderFeatureKey = {
 
 export type ReaderFeatureKey = (typeof ReaderFeatureKey)[keyof typeof ReaderFeatureKey];
 
+export type WorkspaceOverrideRules = {
+  weights: number[];
+  intercept: number;
+  mean: number[];
+  scale: number[];
+  lockThreshold: number;
+  trainedAt: string;
+  sampleSize: number;
+};
+
 export type WorkspacePrimitive = {
   id: string;
   name: string;
@@ -34,6 +43,7 @@ export type WorkspacePrimitive = {
   billingStatus: WorkspaceBillingStatus;
   supabaseUrl: string | null;
   supabaseServiceRoleKey: string | null;
+  overrideRules: WorkspaceOverrideRules | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -46,8 +56,8 @@ export type ReaderFeaturesPrimitive = {
   recency: number;
   engagement: number;
   velocity: number;
-  converted: boolean;
-  convertedAt: Date | null;
+  hasSubscribed: number;
+  subscribedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -75,6 +85,17 @@ export const workspaceSchema = z.object({
   billingStatus: workspaceBillingStatusSchema,
   supabaseUrl: z.string().url().nullable(),
   supabaseServiceRoleKey: z.string().nullable(),
+  overrideRules: z
+    .object({
+      weights: z.array(z.number()),
+      intercept: z.number(),
+      mean: z.array(z.number()),
+      scale: z.array(z.number()),
+      lockThreshold: z.number(),
+      trainedAt: z.string(),
+      sampleSize: z.number(),
+    })
+    .nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -87,8 +108,8 @@ export const readerFeaturesSchema = z.object({
   recency: z.number().nonnegative(),
   engagement: z.number().nonnegative(),
   velocity: z.number().nonnegative(),
-  converted: z.boolean(),
-  convertedAt: z.coerce.date().nullable(),
+  hasSubscribed: z.union([z.literal(0), z.literal(1)]),
+  subscribedAt: z.coerce.date().nullable(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });

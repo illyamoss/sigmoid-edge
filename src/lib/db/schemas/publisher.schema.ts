@@ -1,10 +1,12 @@
 import {
-  boolean,
+  integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -13,6 +15,16 @@ import {
   PaywallVariant,
   WorkspaceBillingStatus,
 } from "@/core/domain/database.types";
+
+export type WorkspaceOverrideRules = {
+  weights: number[];
+  intercept: number;
+  mean: number[];
+  scale: number[];
+  lockThreshold: number;
+  trainedAt: string;
+  sampleSize: number;
+};
 
 export const workspaceBillingStatusValues = [
   WorkspaceBillingStatus.Trialing,
@@ -24,7 +36,6 @@ export const workspaceBillingStatusValues = [
 
 export const paywallVariantValues = [
   PaywallVariant.Open,
-  PaywallVariant.Newsletter,
   PaywallVariant.Lock,
 ] as const;
 
@@ -47,6 +58,7 @@ export const workspaces = pgTable("workspaces", {
     .default(WorkspaceBillingStatus.Trialing),
   supabaseUrl: text("supabase_url"),
   supabaseServiceRoleKey: text("supabase_service_role_key"),
+  overrideRules: jsonb("override_rules").$type<WorkspaceOverrideRules>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -55,33 +67,40 @@ export const workspaces = pgTable("workspaces", {
     .defaultNow(),
 });
 
-export const readersFeatures = pgTable("readers_features", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id")
-    .notNull()
-    .references(() => workspaces.id, { onDelete: "cascade" }),
-  readerToken: varchar("reader_token", { length: 128 }).notNull(),
-  frequency: numeric("frequency", { precision: 12, scale: 4 })
-    .notNull()
-    .default("0"),
-  recency: numeric("recency", { precision: 12, scale: 4 })
-    .notNull()
-    .default("0"),
-  engagement: numeric("engagement", { precision: 14, scale: 4 })
-    .notNull()
-    .default("0"),
-  velocity: numeric("velocity", { precision: 12, scale: 4 })
-    .notNull()
-    .default("0"),
-  converted: boolean("converted").notNull().default(false),
-  convertedAt: timestamp("converted_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const readersFeatures = pgTable(
+  "readers_features",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    readerToken: varchar("reader_token", { length: 128 }).notNull(),
+    frequency: numeric("frequency", { precision: 12, scale: 4 })
+      .notNull()
+      .default("0"),
+    recency: numeric("recency", { precision: 12, scale: 4 })
+      .notNull()
+      .default("0"),
+    engagement: numeric("engagement", { precision: 14, scale: 4 })
+      .notNull()
+      .default("0"),
+    velocity: numeric("velocity", { precision: 12, scale: 4 })
+      .notNull()
+      .default("0"),
+    hasSubscribed: integer("has_subscribed").notNull().default(0),
+    subscribedAt: timestamp("subscribed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    workspaceReaderTokenIndex: unique("readers_features_workspace_token_unique")
+      .on(table.workspaceId, table.readerToken),
+  }),
+);
 
 export const conversionLogs = pgTable("conversion_logs", {
   id: uuid("id").primaryKey().defaultRandom(),

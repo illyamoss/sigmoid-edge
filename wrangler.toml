@@ -1,0 +1,6 @@
+name = "sigmoid-edge-worker"
+main = "src/lib/integration/cloudflare-worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+ORIGIN_URL = "http://localhost:3000"
