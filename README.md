@@ -12,6 +12,8 @@ An open-source, edge-native subscriber propensity scoring engine that brings ent
 
 </div>
 
+![Demo](https://github.com/illyamoss/images/blob/master/Screenshot%202026-07-15%20at%2000.30.12.png)
+
 ---
 
 ## The Problem
